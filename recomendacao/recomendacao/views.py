@@ -40,6 +40,11 @@ def decode_string(string):
     return string.decode(ENCODING)
 
 
+def serialize_render(data, renderer_class):
+    renderer = renderer_class()
+    return renderer.render(data)
+
+
 class TemplateViewContext(TemplateView):
     extra_context = {}
 
@@ -80,6 +85,24 @@ class ViewBusca(View):
         return render(request, self.template_name, context)
 
 
+def envia_texto_sobek(request):
+    request_body = json.loads(request.body)
+
+    text = request_body['text']
+    text = strip_escape(text)
+    text = encode_string(text)
+
+    sobek_output = executa_sobek(text)
+    while len(sobek_output.split()) > MAX_SIZE_SOBEK_OUTPUT:
+        sobek_output = executa_sobek(sobek_output)
+
+    response = {
+        'sobek_output': sobek_output.split()
+    }
+
+    return HttpResponse(json.dumps(response), content_type="application/json")
+
+
 def executa_sobek(text):
     sobek_path = os.path.join(settings.BASE_DIR, 'misc', 'webServiceSobek_Otavio.jar')
 
@@ -118,28 +141,6 @@ def executa_xgoogle(search_input, request):
         results_list.append(result_dict)
 
     return results_list
-
-
-def serialize_render(data, renderer_class):
-    renderer = renderer_class()
-    return renderer.render(data)
-
-
-def envia_texto_sobek(request):
-    request_body = json.loads(request.body)
-
-    text = request_body['text']
-    text = strip_escape(text)
-
-    sobek_output = executa_sobek(text)
-    while len(sobek_output.split()) > MAX_SIZE_SOBEK_OUTPUT:
-        sobek_output = executa_sobek(sobek_output)
-
-    response = {
-        'sobek_output': sobek_output.split()
-    }
-
-    return HttpResponse(json.dumps(response), content_type="application/json")
 
 
 class EnviaTextoV2(APIView):
