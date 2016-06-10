@@ -3,24 +3,30 @@ jQuery(document).ready(function($) {
     $('#form-texto').submit(function(event) {
         //var text = $('#form-texto #id_text').val();
         var text = tinyMCE.activeEditor.getContent({format : 'text'});
-        
+        var cache_reload = $('#id_cache_reload').val();
+        var data = {text: text, cache_reload: cache_reload};
+
+        event.preventDefault();
         $.ajax({
             type: 'POST',
-            url: '{% url "envia_texto_sobek" %}',
-            data: JSON.stringify({text:text}),
+            url: '{% url "post-v1" %}',
+            data: JSON.stringify(data),
+            contentType: 'application/json',
+            dataType: 'json',
             success: function(response) {
                 var sobek_output = convert_list_of_strings_to_string(response.sobek_output);
                 console.log('Saída do Sobek: %s', sobek_output);
-                
+
                 var element = google.search.cse.element.getElement('gsearch');
                 element.execute(response.sobek_output);
+            },
+            error: function(jqXHR, textStatus, errorThrown) {
+                console.log(jqXHR.responseJSON);
             },
             beforeSend: function(jqXHR, settings) {
                 jqXHR.setRequestHeader('X-CSRFToken', $('input[name=csrfmiddlewaretoken]').val());
             }
         });
-        
-        return false;
     });
 });
 

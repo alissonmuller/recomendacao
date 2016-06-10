@@ -15,12 +15,16 @@
         <div>
             {{ form.text }}
         </div>
-        
+
+        <div>
+            Atualização do cache: {{ form.cache_reload }} segundos
+        </div>
+
         <div>
             <input id="btn-enviar-texto" type="submit" value="Enviar texto">
         </div>
     </form>
-    
+
     <div id='custom-search'>
         <div id="results"></div>
     </div>

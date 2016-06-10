@@ -91,41 +91,79 @@ class TemplateViewBusca(TemplateViewContext):
         return render(request, self.template_name, context)
 
 
-def envia_texto_sobek(request):
-    request_body = json.loads(request.body)
+class EnviaTextoV1(APIView):
+    def post(self, request, format=None):
+        serializer = SerializerText(data=request.data)
+        if serializer.is_valid():
+            self.request_data = serializer.data
+            self.input_hash = hashlib.sha224(request.path_info + unicode(self.request_data)).hexdigest()
+            response_data = self.get_response_data(request)
+            return Response(response_data, status=status.HTTP_200_OK, template_name=os.path.join(APP_NAME, 'resultados-v1.html'))
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST, exception=True)
 
-    text = request_body['text']
-    text = strip_escape(text)
-    text = encode_string(text)
+    def get_response_data(self, request):
+        cache = caches['default']
+        cache_reload = self.request_data.get('cache_reload')
+        if cache.get(self.input_hash):
+            json_response_data = self.read_response_data_file(self.input_hash, JSONRenderer.format)
+            response_data = json.loads(json_response_data)
+        else:
+            response_data = self.process_text(request)
+            cache.set(self.input_hash, True, cache_reload)
+        return response_data
 
-    sobek_output = executa_sobek(text)
-    while len(sobek_output.split()) > MAX_SIZE_SOBEK_OUTPUT:
-        sobek_output = executa_sobek(sobek_output)
+    def process_text(self, request):
+        text = self.request_data['text']
+        text = strip_escape(text)
+        text = encode_string(text)
+        response_data = {}
 
-    response = {
-        'sobek_output': sobek_output.split()
-    }
+        sobek_output = self.run_sobek(text)
+        while len(sobek_output.split()) > MAX_SIZE_SOBEK_OUTPUT:
+            sobek_output = self.run_sobek(sobek_output)
+        response_data['sobek_output'] = decode_string(sobek_output).split()
 
-    return HttpResponse(json.dumps(response), content_type="application/json")
+        #if request.accepted_renderer.format == 'html':
+        #text_hash = hashlib.sha224(str(response_data)).hexdigest()
+        response_data['text_hash'] = self.input_hash
+        xml_response_data = serialize_render(response_data, XMLRenderer)
+        self.create_response_data_file(xml_response_data, self.input_hash, XMLRenderer.format)
+        json_response_data = serialize_render(response_data, JSONRenderer)
+        self.create_response_data_file(json_response_data, self.input_hash, JSONRenderer.format)
+        return response_data
 
+    def run_sobek(self, text):
+        sobek_path = os.path.join(settings.BASE_DIR, 'misc', 'webServiceSobek_Otavio.jar')
 
-def executa_sobek(text):
-    sobek_path = os.path.join(settings.BASE_DIR, 'misc', 'webServiceSobek_Otavio.jar')
+        try:
+            quoted_text = urllib.quote(text)
+            sobek_command = ['java', '-Dfile.encoding=' + ENCODING, '-jar', encode_string(sobek_path), '-b', '-t', '"' + encode_string(quoted_text) + '"']
+            sobek_output = subprocess.check_output(sobek_command)
+        except subprocess.CalledProcessError:
+            text += ' ' + text
 
-    try:
-        quoted_text = urllib.quote(text)
-        sobek_command = ['java', '-Dfile.encoding=' + ENCODING, '-jar', encode_string(sobek_path), '-b', '-t', '"' + encode_string(quoted_text) + '"']
-        sobek_output = subprocess.check_output(sobek_command)
-    except subprocess.CalledProcessError:
-        text += ' ' + text
+            quoted_text = urllib.quote(text)
+            sobek_command = ['java', '-Dfile.encoding=' + ENCODING, '-jar', encode_string(sobek_path), '-b', '-t', '"' + encode_string(quoted_text) + '"']
+            sobek_output = subprocess.check_output(sobek_command)
 
-        quoted_text = urllib.quote(text)
-        sobek_command = ['java', '-Dfile.encoding=' + ENCODING, '-jar', encode_string(sobek_path), '-b', '-t', '"' + encode_string(quoted_text) + '"']
-        sobek_output = subprocess.check_output(sobek_command)
+        sobek_output = sobek_output.replace('\n', ' ')
 
-    sobek_output = sobek_output.replace('\n', ' ')
+        return sobek_output
 
-    return sobek_output
+    def create_response_data_file(self, response_data, text_hash, file_format):
+        filename = text_hash + '.' + file_format
+        aux.make_sure_path_exists(settings.FILES_ROOT)
+        with open(os.path.join(settings.FILES_ROOT, filename), 'wb') as response_data_file:
+            response_data_file.write(response_data)
+            response_data_file.close()
+
+    def read_response_data_file(self, text_hash, file_format):
+        filename = text_hash + '.' + file_format
+        aux.make_sure_path_exists(settings.FILES_ROOT)
+        with open(os.path.join(settings.FILES_ROOT, filename), 'rb') as response_data_file:
+            response_data = response_data_file.read()
+            response_data_file.close()
+        return response_data
 
 
 class EnviaTextoV2(APIView):

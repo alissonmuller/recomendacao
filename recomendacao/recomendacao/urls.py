@@ -13,6 +13,7 @@ from recomendacao.const import APP_NAME, CSE_ID
 admin.autodiscover()
 
 api_urlpatterns = [
+    url(r'^v1/post/$', views.EnviaTextoV1.as_view(), name='post-v1'),
     url(r'^v2/post/$', views.EnviaTextoV2.as_view(), name='post-v2'),
     url(r'^v3/post/$', views.EnviaTextoV3.as_view(), name='post-v3'),
 ]
@@ -25,14 +26,12 @@ urlpatterns = [
 
     # project
     url(r'^$', views.TemplateViewContext.as_view(template_name=os.path.join(APP_NAME, 'inicio.html')), name='inicio'),
-    url(r'^v1/$', views.TemplateViewBusca.as_view(template_name=os.path.join(APP_NAME, 'busca.html')), name='v1'),
+    url(r'^v1/$', views.TemplateViewBusca.as_view(template_name=os.path.join(APP_NAME, 'busca-post-v1.html')), name='v1'),
     url(r'^v2/$', views.TemplateViewBusca.as_view(template_name=os.path.join(APP_NAME, 'busca-post-v2.html')), name='v2'),
     url(r'^v3/$', views.TemplateViewBusca.as_view(template_name=os.path.join(APP_NAME, 'busca-post-v3.html')), name='v3'),
 
     url(r'^v2/resultados/$', views.TemplateViewContextPost.as_view(template_name=os.path.join(APP_NAME, 'resultados-v2.html')), name='resultados-v2'),
     url(r'^v3/resultados/$', views.TemplateViewContextPost.as_view(template_name=os.path.join(APP_NAME, 'resultados-v3.html')), name='resultados-v3'),
-
-    url(r'^envia-texto-sobek/$', views.envia_texto_sobek, name='envia_texto_sobek'),
 
     url(r'^jquery.redirect.csrf.js$', views.TemplateViewContext.as_view(template_name=os.path.join(APP_NAME, 'js', 'jquery.redirect.csrf.js')), name='jquery.redirect.csrf'),
     url(r'^js-aux/$', views.TemplateViewContext.as_view(template_name=os.path.join(APP_NAME, 'js', 'js-aux.js')), name='js-aux'),
