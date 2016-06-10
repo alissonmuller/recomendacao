@@ -122,27 +122,6 @@ def executa_sobek(text):
     return sobek_output
 
 
-def executa_xgoogle(search_input, request):
-    gs = GoogleSearchCseMarkup(search_input, user_agent=request.META['HTTP_USER_AGENT'], lang='pt-br', tld='com.br', cx=CSE_ID)
-    results = gs.get_results()
-
-    results_list = []
-    for res in results:
-        result_dict = {}
-
-        result_dict['title'] = res.title
-        result_dict['url'] = res.url
-        result_dict['snippet'] = res.desc
-
-        result_dict['title_markup'] = res.title_markup
-        result_dict['url_markup'] = res.url_markup
-        result_dict['snippet_markup'] = res.desc_markup
-
-        results_list.append(result_dict)
-
-    return results_list
-
-
 class EnviaTextoV2(APIView):
     def post(self, request, format=None):
         serializer = SerializerText(data=request.data)
