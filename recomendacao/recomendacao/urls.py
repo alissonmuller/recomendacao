@@ -14,8 +14,8 @@ admin.autodiscover()
 
 api_urlpatterns = [
     url(r'^v1/post/$', views.EnviaTextoV1.as_view(), name='post-v1'),
-    url(r'^v2/post/$', views.EnviaTextoV2.as_view(), name='post-v2'),
-    url(r'^v3/post/$', views.EnviaTextoV3.as_view(), name='post-v3'),
+    url(r'^v2/post/$', views.EnviaTextoV2.as_view(template_name=os.path.join(APP_NAME, 'resultados-v2.html')), name='post-v2'),
+    url(r'^v3/post/$', views.EnviaTextoV3.as_view(template_name=os.path.join(APP_NAME, 'resultados-v3.html')), name='post-v3'),
 ]
 api_urlpatterns = format_suffix_patterns(api_urlpatterns)
 
