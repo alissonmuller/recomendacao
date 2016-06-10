@@ -12,7 +12,7 @@ from django.core.context_processors import csrf
 from django.http import HttpResponse
 from django.shortcuts import render
 from django.utils.html import strip_tags, escape
-from django.views.generic import View, TemplateView
+from django.views.generic import TemplateView
 from rest_framework import status
 from rest_framework.renderers import JSONRenderer
 from rest_framework.response import Response
@@ -48,39 +48,45 @@ def serialize_render(data, renderer_class):
 class TemplateViewContext(TemplateView):
     extra_context = {}
 
-    def get_context_data(self, **kwargs):
+    def get_context_data(self, request, **kwargs):
         context = super(TemplateViewContext, self).get_context_data(**kwargs)
         context.update(self.extra_context)
+        self.get_request_data(request, context)
         return context
 
-    def get(self, request, *args, **kwargs):
-        context = self.get_context_data(**kwargs)
-        if request.GET.get('data'):
-            request_data = json.loads(request.GET.get('data'))
+    def get_request_data(self, request, context):
+        request_data_json = request.GET.get('data')
+        if request_data_json:
+            request_data = json.loads(request_data_json)
             context.update(request_data)
+
+    def get(self, request, *args, **kwargs):
+        context = self.get_context_data(request, **kwargs)
         return self.render_to_response(context)
 
 
 class TemplateViewContextPost(TemplateViewContext):
     http_method_names = ['post', 'put', 'patch', 'delete', 'head', 'options', 'trace']
 
-    def post(self, request, *args, **kwargs):
-        context = self.get_context_data(**kwargs)
-        if request.body:
-            request_data = json.loads(request.body)
+    def get_request_data(self, request, context):
+        request_data_json = request.body
+        if request_data_json:
+            request_data = json.loads(request_data_json)
             context.update(request_data)
+
+    def post(self, request, *args, **kwargs):
+        context = self.get_context_data(request, **kwargs)
         return self.render_to_response(context)
 
 
-class ViewBusca(View):
-    template_name = None
+class TemplateViewBusca(TemplateViewContext):
+    def get(self, request, *args, **kwargs):
+        context = self.get_context_data(request, **kwargs)
+        form = FormText()
 
-    def get(self, request):
-        form_text = FormText()
-
-        context = {
-            'form': form_text
-        }
+        context.update({
+            'form': form,
+        })
         context.update(csrf(request))
         return render(request, self.template_name, context)
 
