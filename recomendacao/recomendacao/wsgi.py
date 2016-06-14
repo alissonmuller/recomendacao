@@ -16,4 +16,12 @@ from django.core.handlers.wsgi import WSGIHandler
 application =  WSGIHandler()
 
 from django.core.wsgi import get_wsgi_application
-application = get_wsgi_application()
+_application = get_wsgi_application()
+
+from django.conf import settings
+
+def application(environ, start_response):
+    script_name = environ.get('SCRIPT_NAME', '')
+    settings.STATIC_URL = script_name + '/static/'
+    settings.FILES_URL = script_name + '/files/'
+    return _application(environ, start_response)

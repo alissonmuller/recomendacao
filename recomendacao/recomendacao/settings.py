@@ -39,19 +39,19 @@ INSTALLED_APPS = (
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    
+
     'rest_framework',
     'corsheaders',
-    
+
     APP_NAME + u'.apps.RecomendacaoConteudoAppConfig',
 )
 
 MIDDLEWARE_CLASSES = (
     'django.contrib.sessions.middleware.SessionMiddleware',
-    
+
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.common.CommonMiddleware',
-    
+
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.auth.middleware.SessionAuthenticationMiddleware',
@@ -132,12 +132,6 @@ STATIC_URL = '/static/'
 FILES_ROOT = os.path.join(BASE_DIR, 'files')
 
 FILES_URL = '/files/'
-
-if not DEBUG:
-    STATIC_URL = '/' + APP_NAME + '/static/'
-
-if not DEBUG:
-    FILES_URL = '/' + APP_NAME + '/files/'
 
 
 REST_FRAMEWORK = {
